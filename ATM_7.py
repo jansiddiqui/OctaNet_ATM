@@ -5,6 +5,17 @@ from datetime import datetime
 import pygame
 import threading
 from user_data import users
+import os
+
+def log_transaction(message):
+    # Ensure transaction log directory exists
+    if not os.path.exists('transaction_logs'):
+        os.makedirs('transaction_logs')
+    
+    # Open log file in append mode and write transaction details
+    with open('transaction_logs/transactions.txt', 'a') as log_file:
+        log_file.write(message + "\n\n")
+
 
 current_user = None  # logged-in user's data
 
@@ -82,22 +93,36 @@ def withdraw_money():
     tk.Label(root, text="Enter Desired Amount", font=('Helvetica', 14), bg='#33ccff').pack(pady=10)
     withdraw_amount_entry = tk.Entry(root, font=('Helvetica', 12), justify="center")
     withdraw_amount_entry.pack(pady=5)
-    def process_withdrawal():
-        withdraw_amount = int(withdraw_amount_entry.get())
-        if withdraw_amount <= users[current_user]["balance"]:
-            users[current_user]["balance"] -= withdraw_amount
-            message = f'''
+    
+def process_withdrawal():
+    withdraw_amount = int(withdraw_amount_entry.get())
+    if withdraw_amount <= users[current_user]["balance"]:
+        # Deduct the withdrawal amount from the user's balance
+        users[current_user]["balance"] -= withdraw_amount
+
+        # Get the current date and time
+        current_datetime = get_current_datetime()
+        current_date, current_time = current_datetime.split(" ")
+
+        # Create the transaction message
+        message = f'''
                 ----------------------------
                 - Name : {current_user}
                 - Amount : {withdraw_amount} Rs. 
-                - Amount Remaining : {users[current_user]["balance"]} Rs.                  
+                - Amount Remaining : {users[current_user]["balance"]} Rs.                   
                 - Date: {current_date}
                 - Time: {current_time}
                 ----------------------------
                 '''
-            create_message_window("Withdrawal", message, lambda: play_sound("withdraw_money"))
-        else:
-            messagebox.showwarning("Warning", "Insufficient funds!")
+
+        # **Log the transaction** by calling the log_transaction function
+        log_transaction(message)
+
+        # Show the withdrawal message to the user
+        create_message_window("Withdrawal", message, lambda: play_sound("withdraw_money"))
+    else:
+        messagebox.showwarning("Warning", "Insufficient funds!")
+
     ttk.Button(root, text="Submit", command=process_withdrawal, style='Water.TButton').pack(pady=10)
     ttk.Button(root, text="Back", command=show_main_menu, style='Water.TButton').pack(pady=5)
 
